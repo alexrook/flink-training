@@ -54,13 +54,14 @@ public class ComposedKeyedProcessFunction<K, IN, OUT> extends KeyedProcessFuncti
             exercise.setRuntimeContext(this.getRuntimeContext());
             exercise.open(parameters);
         } catch (Exception e) {
-            if (MissingSolutionException.ultimateCauseIsMissingSolution(e)) {
-                this.implementationToTest = solution;
-                solution.setRuntimeContext(this.getRuntimeContext());
-                solution.open(parameters);
-            } else {
-                throw e;
-            }
+            throw e;
+            // if (MissingSolutionException.ultimateCauseIsMissingSolution(e)) {
+            //     this.implementationToTest = solution;
+            //     solution.setRuntimeContext(this.getRuntimeContext());
+            //     solution.open(parameters);
+            // } else {
+            //     throw e;
+            // }
         }
     }
 

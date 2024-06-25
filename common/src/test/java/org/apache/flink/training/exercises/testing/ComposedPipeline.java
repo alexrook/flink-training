@@ -47,11 +47,12 @@ public class ComposedPipeline<IN, OUT> implements ExecutablePipeline<IN, OUT> {
         try {
             result = exercise.execute(source, sink);
         } catch (Exception e) {
-            if (MissingSolutionException.ultimateCauseIsMissingSolution(e)) {
-                result = solution.execute(source, sink);
-            } else {
-                throw e;
-            }
+            throw e;
+            // if (MissingSolutionException.ultimateCauseIsMissingSolution(e)) {
+            //     result = solution.execute(source, sink);
+            // } else {
+            //     throw e;
+            // }
         }
 
         return result;

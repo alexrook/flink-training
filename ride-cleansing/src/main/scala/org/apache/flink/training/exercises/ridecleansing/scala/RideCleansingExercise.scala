@@ -20,20 +20,23 @@ package org.apache.flink.training.exercises.ridecleansing.scala
 
 import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.FilterFunction
-import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
+import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction
+import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
+import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.common.sources.TaxiRideGenerator
 import org.apache.flink.training.exercises.common.utils.MissingSolutionException
-import org.apache.flink.streaming.api.scala._
-import org.apache.flink.training.exercises.common.datatypes.TaxiRide
+import org.apache.flinkx.api._
 
 /** The Ride Cleansing exercise from the Flink training.
   *
-  * The task of this exercise is to filter a data stream of taxi ride records to keep only
-  * rides that both start and end within New York City. The resulting stream should be printed
-  * to the standard out.
+  * The task of this exercise is to filter a data stream of taxi ride records to keep only rides that both start and end within New York City. The resulting
+  * stream should be printed to the standard out.
   */
 object RideCleansingExercise {
+
+  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] = TypeInformation.of(classOf[TaxiRide])
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -59,6 +62,7 @@ object RideCleansingExercise {
       // execute the pipeline and return the result
       env.execute()
     }
+
   }
 
   /** Keep only those rides and both start and end in NYC. */
@@ -66,4 +70,5 @@ object RideCleansingExercise {
     override def filter(taxiRide: TaxiRide): Boolean =
       throw new MissingSolutionException()
   }
+
 }

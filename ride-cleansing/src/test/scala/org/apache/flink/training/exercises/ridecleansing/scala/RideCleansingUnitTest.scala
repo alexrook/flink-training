@@ -21,14 +21,13 @@ package org.apache.flink.training.exercises.ridecleansing.scala
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.ridecleansing
 import org.apache.flink.training.exercises.testing.ComposedFilterFunction
-import org.apache.flink.training.solutions.ridecleansing.scala.RideCleansingSolution
 
 class RideCleansingUnitTest extends ridecleansing.RideCleansingUnitTest {
 
   override def filterFunction: ComposedFilterFunction[TaxiRide] = {
     new ComposedFilterFunction[TaxiRide](
       new RideCleansingExercise.NYCFilter,
-      new RideCleansingSolution.NYCFilter
+      new RideCleansingExercise.NYCFilter
     )
   }
 

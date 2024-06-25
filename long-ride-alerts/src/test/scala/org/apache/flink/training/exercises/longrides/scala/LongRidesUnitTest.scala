@@ -21,18 +21,14 @@ package org.apache.flink.training.exercises.longrides.scala
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.longrides
 import org.apache.flink.training.exercises.testing.ComposedKeyedProcessFunction
-import org.apache.flink.training.solutions.longrides.scala.LongRidesSolution
 
-/** The Scala tests extend the Java tests by overriding the composedAlertFunction() method
-  * to use the Scala implementations of the exercise and solution.
+/** The Scala tests extend the Java tests by overriding the composedAlertFunction() method to use the Scala implementations of the exercise and solution.
   */
 class LongRidesUnitTest extends longrides.LongRidesUnitTest {
 
   private val scalaExercise = new LongRidesExercise.AlertFunction
 
-  private val scalaSolution = new LongRidesSolution.AlertFunction
-
   override def composedAlertFunction: ComposedKeyedProcessFunction[Long, TaxiRide, Long] =
-    new ComposedKeyedProcessFunction[Long, TaxiRide, Long](scalaExercise, scalaSolution)
+    new ComposedKeyedProcessFunction[Long, TaxiRide, Long](scalaExercise, scalaExercise)
 
 }

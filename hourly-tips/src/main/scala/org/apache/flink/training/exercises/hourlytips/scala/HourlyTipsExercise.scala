@@ -19,19 +19,23 @@
 package org.apache.flink.training.exercises.hourlytips.scala
 
 import org.apache.flink.api.common.JobExecutionResult
-import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
+import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction
+import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala._
 import org.apache.flink.training.exercises.common.datatypes.TaxiFare
 import org.apache.flink.training.exercises.common.sources.TaxiFareGenerator
 import org.apache.flink.training.exercises.common.utils.MissingSolutionException
+import org.apache.flinkx.api._
 
 /** The Hourly Tips exercise from the Flink training.
   *
-  * The task of the exercise is to first calculate the total tips collected by each driver,
-  * hour by hour, and then from that stream, find the highest tip total in each hour.
+  * The task of the exercise is to first calculate the total tips collected by each driver, hour by hour, and then from that stream, find the highest tip total
+  * in each hour.
   */
 object HourlyTipsExercise {
+
+  implicit val taxiFareTypeInfo: TypeInformation[TaxiFare] = TypeInformation.of(classOf[TaxiFare])
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -67,5 +71,7 @@ object HourlyTipsExercise {
       // execute the pipeline and return the result
       env.execute("Hourly Tips")
     }
+
   }
+
 }

@@ -19,23 +19,16 @@
 package org.apache.flink.training.exercises.ridecleansing.scala
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.ridecleansing
 import org.apache.flink.training.exercises.testing.{ComposedPipeline, ExecutablePipeline, TestSink}
-import org.apache.flink.training.solutions.ridecleansing.scala.RideCleansingSolution
 
 class RideCleansingIntegrationTest extends ridecleansing.RideCleansingIntegrationTest {
 
   private val EXERCISE: ExecutablePipeline[TaxiRide, TaxiRide] =
-    (source: SourceFunction[TaxiRide], sink: TestSink[TaxiRide]) =>
-      new RideCleansingExercise.RideCleansingJob(source, sink).execute()
-
-  private val SOLUTION: ExecutablePipeline[TaxiRide, TaxiRide] =
-    (source: SourceFunction[TaxiRide], sink: TestSink[TaxiRide]) =>
-      new RideCleansingSolution.RideCleansingJob(source, sink).execute()
+    (source: SourceFunction[TaxiRide], sink: TestSink[TaxiRide]) => new RideCleansingExercise.RideCleansingJob(source, sink).execute()
 
   override def rideCleansingPipeline: ComposedPipeline[TaxiRide, TaxiRide] =
-    new ComposedPipeline[TaxiRide, TaxiRide](EXERCISE, SOLUTION)
+    new ComposedPipeline[TaxiRide, TaxiRide](EXERCISE, EXERCISE)
 
 }

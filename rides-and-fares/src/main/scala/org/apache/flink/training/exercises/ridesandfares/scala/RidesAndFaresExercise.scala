@@ -19,21 +19,27 @@
 package org.apache.flink.training.exercises.ridesandfares.scala
 
 import org.apache.flink.api.common.JobExecutionResult
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.co.RichCoFlatMapFunction
 import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.flink.training.exercises.common.datatypes.{RideAndFare, TaxiFare, TaxiRide}
 import org.apache.flink.training.exercises.common.sources.{TaxiFareGenerator, TaxiRideGenerator}
 import org.apache.flink.training.exercises.common.utils.MissingSolutionException
 import org.apache.flink.util.Collector
+import org.apache.flinkx.api._
+import org.apache.flinkx.api.serializers._
 
 /** The Stateful Enrichment exercise from the Flink training.
   *
   * The goal for this exercise is to enrich TaxiRides with fare information.
   */
 object RidesAndFaresExercise {
+
+  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] = TypeInformation.of(classOf[TaxiRide])
+  implicit val taxiFareTypeInfo: TypeInformation[TaxiFare] = TypeInformation.of(classOf[TaxiFare])
+  implicit val rideAndFareTypeInfo: TypeInformation[RideAndFare] = TypeInformation.of(classOf[RideAndFare])
 
   class RidesAndFaresJob(
       rideSource: SourceFunction[TaxiRide],
@@ -66,6 +72,7 @@ object RidesAndFaresExercise {
 
       env.execute()
     }
+
   }
 
   @throws[Exception]
@@ -89,6 +96,7 @@ object RidesAndFaresExercise {
     override def flatMap2(fare: TaxiFare, out: Collector[RideAndFare]): Unit = {
       throw new MissingSolutionException()
     }
+
   }
 
 }

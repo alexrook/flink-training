@@ -27,7 +27,6 @@ import org.apache.flink.training.exercises.testing.ComposedPipeline;
 import org.apache.flink.training.exercises.testing.ExecutablePipeline;
 import org.apache.flink.training.exercises.testing.ParallelTestSource;
 import org.apache.flink.training.exercises.testing.TestSink;
-import org.apache.flink.training.solutions.longrides.LongRidesSolution;
 
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -38,76 +37,59 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class LongRidesIntegrationTest extends LongRidesTestBase {
 
-    private static final int PARALLELISM = 2;
+	private static final int PARALLELISM = 2;
 
-    /** This isn't necessary, but speeds up the tests. */
-    @ClassRule
-    public static MiniClusterWithClientResource flinkCluster =
-            new MiniClusterWithClientResource(
-                    new MiniClusterResourceConfiguration.Builder()
-                            .setNumberSlotsPerTaskManager(PARALLELISM)
-                            .setNumberTaskManagers(1)
-                            .build());
+	/** This isn't necessary, but speeds up the tests. */
+	@ClassRule
+	public static MiniClusterWithClientResource flinkCluster = new MiniClusterWithClientResource(
+			new MiniClusterResourceConfiguration.Builder().setNumberSlotsPerTaskManager(PARALLELISM)
+					.setNumberTaskManagers(1).build());
 
-    @Test
-    public void shortRide() throws Exception {
+	@Test
+	public void shortRide() throws Exception {
 
-        TaxiRide rideStarted = startRide(1, BEGINNING);
-        TaxiRide endedOneMinLater = endRide(rideStarted, ONE_MINUTE_LATER);
+		TaxiRide rideStarted = startRide(1, BEGINNING);
+		TaxiRide endedOneMinLater = endRide(rideStarted, ONE_MINUTE_LATER);
 
-        ParallelTestSource<TaxiRide> source =
-                new ParallelTestSource<>(rideStarted, endedOneMinLater);
+		ParallelTestSource<TaxiRide> source = new ParallelTestSource<>(rideStarted, endedOneMinLater);
 
-        assertThat(results(source)).isEmpty();
-    }
+		assertThat(results(source)).isEmpty();
+	}
 
-    @Test
-    public void shortRideOutOfOrder() throws Exception {
-        TaxiRide rideStarted = startRide(1, BEGINNING);
-        TaxiRide endedOneMinLater = endRide(rideStarted, ONE_MINUTE_LATER);
+	@Test
+	public void shortRideOutOfOrder() throws Exception {
+		TaxiRide rideStarted = startRide(1, BEGINNING);
+		TaxiRide endedOneMinLater = endRide(rideStarted, ONE_MINUTE_LATER);
 
-        ParallelTestSource<TaxiRide> source =
-                new ParallelTestSource<>(endedOneMinLater, rideStarted);
+		ParallelTestSource<TaxiRide> source = new ParallelTestSource<>(endedOneMinLater, rideStarted);
 
-        assertThat(results(source)).isEmpty();
-    }
+		assertThat(results(source)).isEmpty();
+	}
 
-    @Test
-    public void multipleRides() throws Exception {
-        TaxiRide longRideWithoutEnd = startRide(1, BEGINNING);
-        TaxiRide twoHourRide = startRide(2, BEGINNING);
-        TaxiRide otherLongRide = startRide(3, ONE_MINUTE_LATER);
-        TaxiRide shortRide = startRide(4, ONE_HOUR_LATER);
-        TaxiRide shortRideEnded = endRide(shortRide, TWO_HOURS_LATER);
-        TaxiRide twoHourRideEnded = endRide(twoHourRide, BEGINNING);
-        TaxiRide otherLongRideEnded = endRide(otherLongRide, THREE_HOURS_LATER);
+	@Test
+	public void multipleRides() throws Exception {
+		TaxiRide longRideWithoutEnd = startRide(1, BEGINNING);
+		TaxiRide twoHourRide = startRide(2, BEGINNING);
+		TaxiRide otherLongRide = startRide(3, ONE_MINUTE_LATER);
+		TaxiRide shortRide = startRide(4, ONE_HOUR_LATER);
+		TaxiRide shortRideEnded = endRide(shortRide, TWO_HOURS_LATER);
+		TaxiRide twoHourRideEnded = endRide(twoHourRide, BEGINNING);
+		TaxiRide otherLongRideEnded = endRide(otherLongRide, THREE_HOURS_LATER);
 
-        ParallelTestSource<TaxiRide> source =
-                new ParallelTestSource<>(
-                        longRideWithoutEnd,
-                        twoHourRide,
-                        otherLongRide,
-                        shortRide,
-                        shortRideEnded,
-                        twoHourRideEnded,
-                        otherLongRideEnded);
+		ParallelTestSource<TaxiRide> source = new ParallelTestSource<>(longRideWithoutEnd, twoHourRide, otherLongRide,
+				shortRide, shortRideEnded, twoHourRideEnded, otherLongRideEnded);
 
-        assertThat(results(source))
-                .containsExactlyInAnyOrder(longRideWithoutEnd.rideId, otherLongRide.rideId);
-    }
+		assertThat(results(source)).containsExactlyInAnyOrder(longRideWithoutEnd.rideId, otherLongRide.rideId);
+	}
 
-    private static final ExecutablePipeline<TaxiRide, Long> exercise =
-            (source, sink) -> new LongRidesExercise(source, sink).execute();
+	private static final ExecutablePipeline<TaxiRide, Long> exercise = (source,
+			sink) -> new LongRidesExercise(source, sink).execute();
 
-    private static final ExecutablePipeline<TaxiRide, Long> solution =
-            (source, sink) -> new LongRidesSolution(source, sink).execute();
+	protected List<Long> results(SourceFunction<TaxiRide> source) throws Exception {
 
-    protected List<Long> results(SourceFunction<TaxiRide> source) throws Exception {
-
-        TestSink<Long> sink = new TestSink<>();
-        ComposedPipeline<TaxiRide, Long> longRidesPipeline =
-                new ComposedPipeline<>(exercise, solution);
-        JobExecutionResult jobResult = longRidesPipeline.execute(source, sink);
-        return sink.getResults(jobResult);
-    }
+		TestSink<Long> sink = new TestSink<>();
+		ComposedPipeline<TaxiRide, Long> longRidesPipeline = new ComposedPipeline<>(exercise, exercise);
+		JobExecutionResult jobResult = longRidesPipeline.execute(source, sink);
+		return sink.getResults(jobResult);
+	}
 }

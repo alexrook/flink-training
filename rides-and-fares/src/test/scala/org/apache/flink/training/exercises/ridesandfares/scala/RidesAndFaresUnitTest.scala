@@ -18,20 +18,16 @@
 
 package org.apache.flink.training.exercises.ridesandfares.scala
 
-import org.apache.flink.training.exercises.ridesandfares
 import org.apache.flink.training.exercises.common.datatypes.{RideAndFare, TaxiFare, TaxiRide}
+import org.apache.flink.training.exercises.ridesandfares
 import org.apache.flink.training.exercises.testing.ComposedRichCoFlatMapFunction
-import org.apache.flink.training.solutions.ridesandfares.RidesAndFaresSolution
 
-/** The Scala tests extend the Java tests by overriding the composedEnrichmentFunction() method
-  * to use the Scala implementations of the exercise and solution.
+/** The Scala tests extend the Java tests by overriding the composedEnrichmentFunction() method to use the Scala implementations of the exercise and solution.
   */
 class RidesAndFaresUnitTest extends ridesandfares.RidesAndFaresUnitTest {
 
   private val scalaExercise = new RidesAndFaresExercise.EnrichmentFunction
-  private val scalaSolution = new RidesAndFaresSolution.EnrichmentFunction
 
-  override def composedEnrichmentFunction
-      : ComposedRichCoFlatMapFunction[TaxiRide, TaxiFare, RideAndFare] =
-    new ComposedRichCoFlatMapFunction[TaxiRide, TaxiFare, RideAndFare](scalaExercise, scalaSolution)
+  override def composedEnrichmentFunction: ComposedRichCoFlatMapFunction[TaxiRide, TaxiFare, RideAndFare] =
+    new ComposedRichCoFlatMapFunction[TaxiRide, TaxiFare, RideAndFare](scalaExercise, scalaExercise)
 }

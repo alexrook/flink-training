@@ -51,11 +51,12 @@ public class ComposedTwoInputPipeline<IN1, IN2, OUT>
         try {
             result = exercise.execute(source1, source2, sink);
         } catch (Exception e) {
-            if (MissingSolutionException.ultimateCauseIsMissingSolution(e)) {
-                result = solution.execute(source1, source2, sink);
-            } else {
-                throw e;
-            }
+            throw e;
+            // if (MissingSolutionException.ultimateCauseIsMissingSolution(e)) {
+            //     result = solution.execute(source1, source2, sink);
+            // } else {
+            //     throw e;
+            // }
         }
 
         return result;

@@ -23,25 +23,18 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.longrides
 import org.apache.flink.training.exercises.testing.{ComposedPipeline, ExecutablePipeline, TestSink}
-import org.apache.flink.training.solutions.longrides.scala.LongRidesSolution
 
-/** The Scala tests extend the Java tests by overriding the results() method
-  * to use the Scala implementations of the exercise and solution.
+/** The Scala tests extend the Java tests by overriding the results() method to use the Scala implementations of the exercise and solution.
   */
 class LongRidesIntegrationTest extends longrides.LongRidesIntegrationTest {
 
   @throws[Exception]
   override def results(source: SourceFunction[TaxiRide]): java.util.List[java.lang.Long] = {
     val exercise: ExecutablePipeline[TaxiRide, Long] =
-      (source: SourceFunction[TaxiRide], sink: TestSink[Long]) =>
-        new LongRidesExercise.LongRidesJob(source, sink).execute()
-
-    val solution: ExecutablePipeline[TaxiRide, Long] =
-      (source: SourceFunction[TaxiRide], sink: TestSink[Long]) =>
-        new LongRidesSolution.LongRidesJob(source, sink).execute()
+      (source: SourceFunction[TaxiRide], sink: TestSink[Long]) => new LongRidesExercise.LongRidesJob(source, sink).execute()
 
     def longRidesPipeline: ComposedPipeline[TaxiRide, Long] =
-      new ComposedPipeline[TaxiRide, Long](exercise, solution)
+      new ComposedPipeline[TaxiRide, Long](exercise, exercise)
 
     val sink: TestSink[Long] = new TestSink[Long]
     val jobResult: JobExecutionResult = longRidesPipeline.execute(source, sink)

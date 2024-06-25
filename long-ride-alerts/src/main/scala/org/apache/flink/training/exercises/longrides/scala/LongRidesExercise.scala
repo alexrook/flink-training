@@ -18,28 +18,32 @@
 
 package org.apache.flink.training.exercises.longrides.scala
 
+import java.time.Duration
+
 import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.common.sources.TaxiRideGenerator
 import org.apache.flink.training.exercises.common.utils.MissingSolutionException
 import org.apache.flink.util.Collector
-
-import java.time.Duration
+import org.apache.flinkx.api._
+import org.apache.flinkx.api.serializers._
 
 /** The "Long Ride Alerts" exercise.
   *
-  * <p>The goal for this exercise is to emit the rideIds for taxi rides with a duration of more than
-  * two hours. You should assume that TaxiRide events can be lost, but there are no duplicates.
+  * <p>The goal for this exercise is to emit the rideIds for taxi rides with a duration of more than two hours. You should assume that TaxiRide events can be
+  * lost, but there are no duplicates.
   *
   * <p>You should eventually clear any state you create.
   */
 object LongRidesExercise {
+
+  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] = TypeInformation.of(classOf[TaxiRide])
 
   class LongRidesJob(source: SourceFunction[TaxiRide], sink: SinkFunction[Long]) {
 
