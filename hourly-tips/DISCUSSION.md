@@ -17,7 +17,6 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-[中文版](./DISCUSSION_zh.md)
 
 # Lab Discussion: Windowed Analytics (Hourly Tips)
 
