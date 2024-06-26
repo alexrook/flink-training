@@ -18,31 +18,47 @@
 
 package org.apache.flink.training.solutions.longrides.scala
 
+import scala.concurrent.duration._
+
+import java.time.Duration
+
 import org.apache.flink.api.common.JobExecutionResult
-import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
+import org.apache.flink.api.common.eventtime.{
+  SerializableTimestampAssigner,
+  WatermarkStrategy
+}
 import org.apache.flink.api.common.state.{ValueState, ValueStateDescriptor}
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
-import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
+import org.apache.flink.streaming.api.functions.sink.{
+  PrintSinkFunction,
+  SinkFunction
+}
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.common.sources.TaxiRideGenerator
 import org.apache.flink.util.Collector
-
-import java.time.Duration
-import scala.concurrent.duration._
+import org.apache.flinkx.api._
+import org.apache.flinkx.api.serializers._
 
 /** Scala solution for the "Long Ride Alerts" exercise.
   *
-  * <p>The goal for this exercise is to emit the rideIds for taxi rides with a duration of more than
-  * two hours. You should assume that TaxiRide events can be lost, but there are no duplicates.
+  * <p>The goal for this exercise is to emit the rideIds for taxi rides with a
+  * duration of more than two hours. You should assume that TaxiRide events can
+  * be lost, but there are no duplicates.
   *
   * <p>You should eventually clear any state you create.
   */
 object LongRidesSolution {
 
-  class LongRidesJob(source: SourceFunction[TaxiRide], sink: SinkFunction[Long]) {
+  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] =
+    TypeInformation.of(classOf[TaxiRide])
+
+  class LongRidesJob(
+      source: SourceFunction[TaxiRide],
+      sink: SinkFunction[Long]
+  ) {
 
     /** Creates and executes the ride cleansing pipeline.
       */
@@ -57,7 +73,10 @@ object LongRidesSolution {
       val watermarkStrategy = WatermarkStrategy
         .forBoundedOutOfOrderness[TaxiRide](Duration.ofSeconds(60))
         .withTimestampAssigner(new SerializableTimestampAssigner[TaxiRide] {
-          override def extractTimestamp(ride: TaxiRide, streamRecordTimestamp: Long): Long =
+          override def extractTimestamp(
+              ride: TaxiRide,
+              streamRecordTimestamp: Long
+          ): Long =
             ride.getEventTimeMillis
         })
 
@@ -114,7 +133,9 @@ object LongRidesSolution {
           }
         } else {
           // the first ride was a START event, so there is a timer unless it has fired
-          context.timerService.deleteEventTimeTimer(getTimerTime(firstRideEvent))
+          context.timerService.deleteEventTimeTimer(
+            getTimerTime(firstRideEvent)
+          )
 
           // perhaps the ride has gone on too long, but the timer didn't fire yet
           if (rideTooLong(firstRideEvent, ride)) {
@@ -147,7 +168,8 @@ object LongRidesSolution {
         .between(startEvent.eventTime, endEvent.eventTime)
         .compareTo(Duration.ofHours(2)) > 0
 
-    private def getTimerTime(ride: TaxiRide) = ride.eventTime.toEpochMilli + 2.hours.toMillis
+    private def getTimerTime(ride: TaxiRide) =
+      ride.eventTime.toEpochMilli + 2.hours.toMillis
   }
 
 }
