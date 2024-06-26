@@ -20,23 +20,27 @@ package org.apache.flink.training.solutions.hourlytips.scala
 
 import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala._
-import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.training.exercises.common.datatypes.TaxiFare
 import org.apache.flink.training.exercises.common.sources.TaxiFareGenerator
 import org.apache.flink.util.Collector
+import org.apache.flinkx.api._
+import org.apache.flinkx.api.function.ProcessWindowFunction
+import org.apache.flinkx.api.serializers._
 
 /** Scala reference implementation for the Hourly Tips exercise from the Flink training.
   *
-  * The task of the exercise is to first calculate the total tips collected by each driver,
-  * hour by hour, and then from that stream, find the highest tip total in each hour.
+  * The task of the exercise is to first calculate the total tips collected by each driver, hour by hour, and then from that stream, find the highest tip total
+  * in each hour.
   */
 object HourlyTipsSolution {
+
+  implicit val taxiFareTypeInfo: TypeInformation[TaxiFare] = TypeInformation.of(classOf[TaxiFare])
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -67,10 +71,16 @@ object HourlyTipsSolution {
         .addSource(source)
         .assignTimestampsAndWatermarks(watermarkStrategy)
         .map((f: TaxiFare) => (f.driverId, f.tip))
-        .keyBy(_._1)
+        .keyBy {
+          case (driverId, _) => driverId
+        }
         .window(TumblingEventTimeWindows.of(Time.hours(1)))
         .reduce(
-          (f1: (Long, Float), f2: (Long, Float)) => { (f1._1, f1._2 + f2._2) },
+          { // pre aggregator function
+            case ((driverId, tipL), (_, tipRight)) => {
+              (driverId, tipL + tipRight)
+            }
+          },
           new WrapWithWindowInfo()
         )
         .windowAll(TumblingEventTimeWindows.of(Time.hours(1)))
@@ -80,10 +90,11 @@ object HourlyTipsSolution {
       // execute the pipeline and return the result
       env.execute("Hourly Tips")
     }
+
   }
 
-  class WrapWithWindowInfo()
-      extends ProcessWindowFunction[(Long, Float), (Long, Long, Float), Long, TimeWindow] {
+  class WrapWithWindowInfo() extends ProcessWindowFunction[(Long, Float), (Long, Long, Float), Long, TimeWindow] {
+
     override def process(
         key: Long,
         context: Context,
@@ -94,6 +105,7 @@ object HourlyTipsSolution {
       val sumOfTips = elements.iterator.next()._2
       out.collect((context.window.getEnd, key, sumOfTips))
     }
+
   }
 
 }

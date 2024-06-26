@@ -18,15 +18,24 @@
 
 package org.apache.flink.training.exercises.hourlytips.scala
 
+import java.time._
+import java.time.temporal.ChronoUnit
+
 import org.apache.flink.api.common.JobExecutionResult
+import org.apache.flink.api.common.state.ValueState
+import org.apache.flink.api.common.state.ValueStateDescriptor
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
+import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.training.exercises.common.datatypes.TaxiFare
 import org.apache.flink.training.exercises.common.sources.TaxiFareGenerator
-import org.apache.flink.training.exercises.common.utils.MissingSolutionException
+import org.apache.flink.util.Collector
 import org.apache.flinkx.api._
+import org.apache.flinkx.api.serializers._
 
 /** The Hourly Tips exercise from the Flink training.
   *
@@ -56,10 +65,42 @@ object HourlyTipsExercise {
       // start the data generator
       val fares: DataStream[TaxiFare] = env.addSource(source)
 
-      // replace this with your solution
-      if (true) {
-        throw new MissingSolutionException
-      }
+      // Canonical !
+      // fares
+      //   .assignAscendingTimestamps(_.getEventTimeMillis)
+      //   .map { taxiFare =>
+      //     taxiFare.driverId -> taxiFare.tip
+      //   }
+      //   .keyBy {
+      //     case (driverId, _) => driverId
+      //   }
+      //   .window(
+      //     TumblingEventTimeWindows.of(Time.hours(1))
+      //   )
+      //   .reduce {
+      //     case ((driverId, tipLeft), (_, tipRight)) =>
+      //       driverId -> (tipLeft + tipRight)
+      //   }
+      //   .windowAll(TumblingEventTimeWindows.of(Time.hours(1)))
+      //   .max(1)
+      // .print()
+
+      // Custom : TODO: is it correct ?
+      fares
+        .assignAscendingTimestamps(_.getEventTimeMillis)
+        .map { taxiFare =>
+          val startHour = MyProcFunc.startHour(taxiFare.getEventTimeMillis())
+          (startHour, taxiFare.driverId, taxiFare.tip)
+        }
+        .keyBy {
+          case (startHour, driverId, _) => startHour -> driverId
+        }
+        .process(new MyProcFunc())
+        .keyBy {
+          case (endOfHour, _, _) => endOfHour
+        }
+        .max(2)
+        .print()
 
       // the results should be sent to the sink that was passed in
       // (otherwise the tests won't work)
@@ -73,5 +114,82 @@ object HourlyTipsExercise {
     }
 
   }
+
+}
+
+class MyProcFunc extends KeyedProcessFunction[(Long, Long), (Long, Long, Float), (Long, Long, Float)] {
+
+  /** The state that is maintained by this process function */
+  lazy val sumOfTipsState: ValueState[Float] =
+    getRuntimeContext().getState(new ValueStateDescriptor("myState", classOf[Float]))
+
+  lazy val firstInState: ValueState[Boolean] = {
+    val ret =
+      getRuntimeContext().getState(new ValueStateDescriptor("FirstInState", classOf[Boolean]))
+    ret.update(true)
+    ret
+  }
+
+  def processElement(
+      elem: (Long, Long, Float),
+      ctx: KeyedProcessFunction[(Long, Long), (Long, Long, Float), (Long, Long, Float)]#Context,
+      out: Collector[(Long, Long, Float)]
+  ): Unit = {
+    val (_, driverId, tip: Float) = elem
+    if (firstInState.value()) {
+      val (hour, _) = ctx.getCurrentKey()
+
+      val nextHour = MyProcFunc.endOfHour(hour).toEpochMilli()
+
+      sumOfTipsState.update(tip)
+
+      ctx.timerService().registerEventTimeTimer(nextHour)
+
+      println(s"Timer for nextHour[$nextHour] and driverId[$driverId] has been registered")
+
+    } else {
+      sumOfTipsState.update(sumOfTipsState.value() + tip)
+    }
+
+  }
+
+  override def onTimer(
+      timestamp: Long,
+      ctx: KeyedProcessFunction[(Long, Long), (Long, Long, Float), (Long, Long, Float)]#OnTimerContext,
+      out: Collector[(Long, Long, Float)]
+  ): Unit = {
+    val totalHourTips: Float = Option(sumOfTipsState.value()).getOrElse(0f)
+    sumOfTipsState.update(0f) // clean
+
+    val (hour, driverId) = ctx.getCurrentKey()
+
+    val endOfHour = MyProcFunc.endOfHour(hour).toEpochMilli()
+
+    println(s"current key ${ctx.getCurrentKey()}, timestamp[$timestamp], endOfHour[$endOfHour]")
+
+    val ret = (endOfHour, driverId, totalHourTips)
+
+    out.collect(ret)
+
+    ctx.timerService().deleteEventTimeTimer(endOfHour)
+
+  }
+
+}
+
+object MyProcFunc {
+
+  def apply() = new MyProcFunc
+
+  def startHour(eventMillis: Long) =
+    Instant
+      .ofEpochMilli(eventMillis)
+      .truncatedTo(ChronoUnit.HOURS)
+      .toEpochMilli()
+
+  def endOfHour(eventMillis: Long) =
+    Instant
+      .ofEpochMilli(eventMillis)
+      .plus(Duration.ofHours(1))
 
 }
