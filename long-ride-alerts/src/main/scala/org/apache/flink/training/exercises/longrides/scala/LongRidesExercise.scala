@@ -154,6 +154,10 @@ class AlertFunction extends KeyedProcessFunction[Long, TaxiRide, Long] {
           out.collect(ctx.getCurrentKey())
         }
 
+        println(
+          s"WARN start event arrived after stop event time[${endRideTime}] ============"
+        )
+
         setStopped(ctx, None)
 
       case AlertFunctionState
@@ -215,7 +219,7 @@ class AlertFunction extends KeyedProcessFunction[Long, TaxiRide, Long] {
 sealed trait AlertFunctionState extends Product with Serializable
 
 object AlertFunctionState {
-  //WARN: использование case object вызовет MatchError
+  // WARN: использование case object вызовет MatchError
   final case class NullState(creationTime: Long) extends AlertFunctionState
   final case class StartState(startTime: Long) extends AlertFunctionState
 

@@ -26,17 +26,20 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.common.sources.TaxiRideGenerator
+import org.apache.flink.training.exercises.common.utils.GeoUtils
 import org.apache.flink.training.exercises.common.utils.MissingSolutionException
 import org.apache.flinkx.api._
 
 /** The Ride Cleansing exercise from the Flink training.
   *
-  * The task of this exercise is to filter a data stream of taxi ride records to keep only rides that both start and end within New York City. The resulting
+  * The task of this exercise is to filter a data stream of taxi ride records to
+  * keep only rides that both start and end within New York City. The resulting
   * stream should be printed to the standard out.
   */
 object RideCleansingExercise {
 
-  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] = TypeInformation.of(classOf[TaxiRide])
+  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] =
+    TypeInformation.of(classOf[TaxiRide])
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -45,7 +48,10 @@ object RideCleansingExercise {
     job.execute()
   }
 
-  class RideCleansingJob(source: SourceFunction[TaxiRide], sink: SinkFunction[TaxiRide]) {
+  class RideCleansingJob(
+      source: SourceFunction[TaxiRide],
+      sink: SinkFunction[TaxiRide]
+  ) {
 
     /** Creates and executes the ride cleansing pipeline.
       */
@@ -67,8 +73,11 @@ object RideCleansingExercise {
 
   /** Keep only those rides and both start and end in NYC. */
   class NYCFilter extends FilterFunction[TaxiRide] {
+
     override def filter(taxiRide: TaxiRide): Boolean =
-      throw new MissingSolutionException()
+      GeoUtils.isInNYC(taxiRide.startLon, taxiRide.startLat) &&
+        GeoUtils.isInNYC(taxiRide.endLon, taxiRide.endLat)
+
   }
 
 }

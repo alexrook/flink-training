@@ -4,8 +4,8 @@ import Dependency._
 
 compileOrder := CompileOrder.JavaThenScala
 
-libraryDependencies ++= loggingLibs.map(_ % "provided")
-libraryDependencies ++= FlinkLibs.flinkCoreDeps.map(_ % "provided")
+libraryDependencies ++= loggingLibs//.map(_ % "provided")
+libraryDependencies ++= FlinkLibs.flinkCoreDeps//.map(_ % "provided")
 libraryDependencies ++= FlinkLibs.flinkConnectorFiles.map(_ % "provided")
 libraryDependencies ++= FlinkLibs.flinkCommunityScalaApi
 //Test

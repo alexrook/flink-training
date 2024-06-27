@@ -20,20 +20,26 @@ package org.apache.flink.training.solutions.ridecleansing.scala
 
 import org.apache.flink.api.common.JobExecutionResult
 import org.apache.flink.api.common.functions.FilterFunction
-import org.apache.flink.streaming.api.functions.sink.{PrintSinkFunction, SinkFunction}
+import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction
+import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction
-import org.apache.flink.streaming.api.scala._
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide
 import org.apache.flink.training.exercises.common.sources.TaxiRideGenerator
 import org.apache.flink.training.exercises.common.utils.GeoUtils
+import org.apache.flinkx.api._
 
-/** Scala reference implementation for the Ride Cleansing exercise from the Flink training.
+/** Scala reference implementation for the Ride Cleansing exercise from the
+  * Flink training.
   *
-  * The task of this exercise is to filter a data stream of taxi ride records to keep only
-  * rides that both start and end within New York City. The resulting stream should be printed
-  * to the standard out.
+  * The task of this exercise is to filter a data stream of taxi ride records to
+  * keep only rides that both start and end within New York City. The resulting
+  * stream should be printed to the standard out.
   */
 object RideCleansingSolution {
+
+  implicit val taxiRideTypeInfo: TypeInformation[TaxiRide] =
+    TypeInformation.of(classOf[TaxiRide])
 
   @throws[Exception]
   def main(args: Array[String]): Unit = {
@@ -42,7 +48,10 @@ object RideCleansingSolution {
     job.execute()
   }
 
-  class RideCleansingJob(source: SourceFunction[TaxiRide], sink: SinkFunction[TaxiRide]) {
+  class RideCleansingJob(
+      source: SourceFunction[TaxiRide],
+      sink: SinkFunction[TaxiRide]
+  ) {
 
     /** Create and execute the ride cleansing pipeline.
       */
@@ -59,12 +68,16 @@ object RideCleansingSolution {
       // execute the pipeline and return the result
       env.execute()
     }
+
   }
 
   /** Keep only those rides and both start and end in NYC. */
   class NYCFilter extends FilterFunction[TaxiRide] {
+
     override def filter(taxiRide: TaxiRide): Boolean =
       GeoUtils.isInNYC(taxiRide.startLon, taxiRide.startLat) &&
         GeoUtils.isInNYC(taxiRide.endLon, taxiRide.endLat)
+
   }
+
 }
